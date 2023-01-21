@@ -1,7 +1,11 @@
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 
 interface Props {}
 
 export default function AllExpenses({}: Props) {
-  return <View>Recent Expenses Screen</View>;
+  return (
+    <View>
+      <Text>Recent Expenses Screen</Text>
+    </View>
+  );
 }
