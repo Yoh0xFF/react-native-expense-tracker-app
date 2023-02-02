@@ -1,8 +1,9 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useLayoutEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { StackNavParams } from '../App';
+import ExpenseForm from '../components/manage-expense/ExpenseForm';
 import Button from '../components/ui/Button';
 import IconButton from '../components/ui/IconButton';
 import { GlobalStyles } from '../constants/styles';
@@ -58,6 +59,8 @@ export default function ManageExpense({ route, navigation }: ScreenProps) {
 
   return (
     <View style={styles.container}>
+      <ExpenseForm />
+
       <View style={styles.buttonContainer}>
         <Button style={styles.button} mode='flat' onPress={cancelHandler}>
           Cancel
