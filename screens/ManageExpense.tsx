@@ -4,10 +4,10 @@ import { StyleSheet, View } from 'react-native';
 
 import { StackNavParams } from '../App';
 import ExpenseForm from '../components/manage-expense/ExpenseForm';
-import Button from '../components/ui/Button';
 import IconButton from '../components/ui/IconButton';
 import { GlobalStyles } from '../constants/styles';
 import { useExpensesStore } from '../store/expensesStore';
+import { UpdateExpenseReq } from '../types/expenses';
 
 type ScreenProps = NativeStackScreenProps<StackNavParams, 'ManageExpense'>;
 
@@ -26,25 +26,17 @@ export default function ManageExpense({ route, navigation }: ScreenProps) {
   const cancelHandler = () => {
     navigation.goBack();
   };
-  const confirmHandler = () => {
+  const confirmHandler = (updateExpenseReq: UpdateExpenseReq) => {
     if (!isEditing) {
       dispatch({
         type: 'ADD',
-        req: {
-          desc: 'Add test expense',
-          amount: 17.07,
-          date: new Date('2023-02-01'),
-        },
+        req: updateExpenseReq,
       });
     } else {
       dispatch({
         type: 'UPD',
         id: expenseId,
-        req: {
-          desc: 'Update test expense',
-          amount: 17.07,
-          date: new Date('2023-02-01'),
-        },
+        req: updateExpenseReq,
       });
     }
     navigation.goBack();
@@ -59,16 +51,12 @@ export default function ManageExpense({ route, navigation }: ScreenProps) {
 
   return (
     <View style={styles.container}>
-      <ExpenseForm />
+      <ExpenseForm
+        submitButtonLabel={isEditing ? 'Update' : 'Add'}
+        onSubmit={confirmHandler}
+        onCancel={cancelHandler}
+      />
 
-      <View style={styles.buttonContainer}>
-        <Button style={styles.button} mode='flat' onPress={cancelHandler}>
-          Cancel
-        </Button>
-        <Button style={styles.button} onPress={confirmHandler}>
-          {isEditing ? 'Update' : 'Add'}
-        </Button>
-      </View>
       {isEditing && (
         <View style={styles.delContainer}>
           <IconButton
@@ -88,15 +76,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
     backgroundColor: GlobalStyles.colors.primary800,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  button: {
-    minWidth: 120,
-    marginHorizontal: 8,
   },
   delContainer: {
     marginTop: 16,
