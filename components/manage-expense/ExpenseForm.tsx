@@ -1,43 +1,75 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { UpdateExpenseReq } from '../../types/expenses';
+import { GlobalStyles } from '../../constants/styles';
+import { Expense, UpdateExpenseReq } from '../../types/expenses';
+import { formatDate } from '../../util/date';
 import Button from '../ui/Button';
 import Input from './Input';
 
 interface Props {
+  selectedExpense?: Expense;
   submitButtonLabel: string;
   onSubmit: (updateExpenseReq: UpdateExpenseReq) => void;
   onCancel: () => void;
 }
 
 export default function ExpenseForm({
+  selectedExpense,
   submitButtonLabel,
   onSubmit,
   onCancel,
 }: Props) {
-  const [inputValues, setInputValues] = useState({
-    amount: '',
-    date: '',
-    desc: '',
+  const [inputs, setInputs] = useState({
+    amount: {
+      value: selectedExpense ? selectedExpense.amount.toString() : '',
+      isValid: true,
+    },
+    date: {
+      value: selectedExpense ? formatDate(selectedExpense.date) : '',
+      isValid: true,
+    },
+    desc: {
+      value: selectedExpense ? selectedExpense.desc : '',
+      isValid: true,
+    },
   });
 
   const inputChangedHandler = (inputName: string, enteredText: string) => {
-    setInputValues((preState) => ({
+    setInputs((preState) => ({
       ...preState,
-      [inputName]: enteredText,
+      [inputName]: { value: enteredText, isValid: true },
     }));
   };
 
   const submitHandler = () => {
     const updateExpenseReq: UpdateExpenseReq = {
-      amount: +inputValues.amount,
-      date: new Date(inputValues.date),
-      desc: inputValues.desc,
+      amount: +inputs.amount.value,
+      date: new Date(inputs.date.value),
+      desc: inputs.desc.value,
     };
+
+    const amountIsValid =
+      !isNaN(updateExpenseReq.amount) && updateExpenseReq.amount > 0;
+    const dateIsValid = updateExpenseReq.date.toString() !== 'Invalid Date';
+    const descIsValid = updateExpenseReq.desc.trim().length > 0;
+
+    if (!amountIsValid || !dateIsValid || !descIsValid) {
+      setInputs((pre) => {
+        return {
+          amount: { value: pre.amount.value, isValid: amountIsValid },
+          date: { value: pre.date.value, isValid: dateIsValid },
+          desc: { value: pre.desc.value, isValid: descIsValid },
+        };
+      });
+      return;
+    }
 
     onSubmit(updateExpenseReq);
   };
+
+  const formIsInvalid =
+    !inputs.amount.isValid || !inputs.date.isValid || !inputs.desc.isValid;
 
   return (
     <View style={styles.formContainer}>
@@ -46,36 +78,45 @@ export default function ExpenseForm({
       <View style={styles.inputsRow}>
         <Input
           label='Amount'
+          invalid={!inputs.amount.isValid}
           config={{
             keyboardType: 'decimal-pad',
             onChangeText: (enteredText) =>
               inputChangedHandler('amount', enteredText),
-            value: inputValues.amount,
+            value: inputs.amount.value,
           }}
           style={styles.rowInput}
         />
         <Input
           label='Date'
+          invalid={!inputs.date.isValid}
           config={{
             placeholder: 'YYYY-MM-DD',
             maxLength: 10,
             onChangeText: (enteredText) =>
               inputChangedHandler('date', enteredText),
-            value: inputValues.date,
+            value: inputs.date.value,
           }}
           style={styles.rowInput}
         />
       </View>
       <Input
         label='Description'
+        invalid={!inputs.desc.isValid}
         config={{
           multiline: true,
           autoCorrect: false,
           onChangeText: (enteredText) =>
             inputChangedHandler('desc', enteredText),
-          value: inputValues.desc,
+          value: inputs.desc.value,
         }}
       />
+
+      {formIsInvalid && (
+        <Text style={styles.errorText}>
+          Invalid input values - please check your entered data!
+        </Text>
+      )}
 
       <View style={styles.buttonContainer}>
         <Button style={styles.button} mode='flat' onPress={onCancel}>
@@ -106,6 +147,11 @@ const styles = StyleSheet.create({
   },
   rowInput: {
     flex: 1,
+  },
+  errorText: {
+    textAlign: 'center',
+    color: GlobalStyles.colors.error500,
+    margin: 8,
   },
   buttonContainer: {
     flexDirection: 'row',

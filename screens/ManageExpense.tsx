@@ -15,7 +15,10 @@ export default function ManageExpense({ route, navigation }: ScreenProps) {
   const expenseId = route.params?.expenseId;
   const isEditing = !!expenseId;
 
+  const expenses = useExpensesStore((store) => store.expenses);
   const dispatch = useExpensesStore((store) => store.dispatch);
+
+  const selectedExpense = expenses.find((el) => el.id === expenseId);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -52,6 +55,7 @@ export default function ManageExpense({ route, navigation }: ScreenProps) {
   return (
     <View style={styles.container}>
       <ExpenseForm
+        selectedExpense={selectedExpense}
         submitButtonLabel={isEditing ? 'Update' : 'Add'}
         onSubmit={confirmHandler}
         onCancel={cancelHandler}

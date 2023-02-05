@@ -16,18 +16,29 @@ interface Props {
   label: string;
   config?: TextInputProps;
   style?: StyleProp<ViewStyle>;
+  invalid?: boolean;
 }
 
-export default function Input({ label, config, style }: Props) {
+export default function Input({
+  label,
+  config,
+  style,
+  invalid = false,
+}: Props) {
   const inputSyles: StyleProp<TextStyle>[] = [styles.input];
 
   if (config && config.multiline) {
     inputSyles.push(styles.inputMultiline);
   }
+  if (invalid) {
+    inputSyles.push(styles.invalidInput);
+  }
 
   return (
     <View style={[styles.inputContainer, style]}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, invalid && styles.invalidLabel]}>
+        {label}
+      </Text>
       <TextInput style={inputSyles} {...(config ?? {})} />
     </View>
   );
@@ -53,5 +64,11 @@ const styles = StyleSheet.create({
   inputMultiline: {
     minHeight: 100,
     textAlignVertical: 'top',
+  },
+  invalidLabel: {
+    color: GlobalStyles.colors.error500,
+  },
+  invalidInput: {
+    backgroundColor: GlobalStyles.colors.error50,
   },
 });
