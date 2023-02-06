@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 
-import { DUMMY_EXPENSES } from '../data/expenses';
 import { Expense, UpdateExpenseReq } from '../types/expenses';
 
 export type ExpenseStoreAction =
-  | { type: 'ADD'; req: UpdateExpenseReq }
+  | { type: 'FETCH'; expenses: Expense[] }
+  | { type: 'ADD'; expense: Expense }
   | { type: 'DEL'; id: string }
   | { type: 'UPD'; id: string; req: UpdateExpenseReq };
 
@@ -26,17 +26,17 @@ const reducer = (
   const { expenses: preExpenses } = state;
 
   switch (type) {
-    case 'ADD': {
-      const { req } = action;
+    case 'FETCH':
+      const { expenses } = action;
 
       return {
-        expenses: [
-          {
-            id: `e${new Date().getTime()}`,
-            ...req,
-          },
-          ...preExpenses,
-        ],
+        expenses: [...expenses.reverse()],
+      };
+    case 'ADD': {
+      const { expense } = action;
+
+      return {
+        expenses: [expense, ...preExpenses],
       };
     }
     case 'UPD': {
@@ -63,7 +63,7 @@ const reducer = (
 };
 
 export const useExpensesStore = create<StoreType>((set) => ({
-  expenses: DUMMY_EXPENSES,
+  expenses: [],
   dispatch: (action: ExpenseStoreAction) =>
     set((state) => reducer(state, action)),
 }));

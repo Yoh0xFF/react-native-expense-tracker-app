@@ -1,13 +1,16 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useLayoutEffect } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { StackNavParams } from '../App';
 import ExpenseForm from '../components/manage-expense/ExpenseForm';
+import ErrorOverlay from '../components/ui/ErrorOverlay';
 import IconButton from '../components/ui/IconButton';
+import LoadingOverlay from '../components/ui/LoadingOverlay';
 import { GlobalStyles } from '../constants/styles';
 import { useExpensesStore } from '../store/expensesStore';
 import { UpdateExpenseReq } from '../types/expenses';
+import { deleteExpense, storeExpense, updateExpense } from '../util/http';
 
 type ScreenProps = NativeStackScreenProps<StackNavParams, 'ManageExpense'>;
 
@@ -17,6 +20,9 @@ export default function ManageExpense({ route, navigation }: ScreenProps) {
 
   const expenses = useExpensesStore((store) => store.expenses);
   const dispatch = useExpensesStore((store) => store.dispatch);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   const selectedExpense = expenses.find((el) => el.id === expenseId);
 
@@ -29,28 +35,51 @@ export default function ManageExpense({ route, navigation }: ScreenProps) {
   const cancelHandler = () => {
     navigation.goBack();
   };
-  const confirmHandler = (updateExpenseReq: UpdateExpenseReq) => {
-    if (!isEditing) {
-      dispatch({
-        type: 'ADD',
-        req: updateExpenseReq,
-      });
-    } else {
-      dispatch({
-        type: 'UPD',
-        id: expenseId,
-        req: updateExpenseReq,
-      });
+  const confirmHandler = async (updateExpenseReq: UpdateExpenseReq) => {
+    setIsSubmitting(true);
+    try {
+      if (!isEditing) {
+        const expense = await storeExpense(updateExpenseReq);
+        dispatch({
+          type: 'ADD',
+          expense,
+        });
+      } else {
+        await updateExpense(expenseId, updateExpenseReq);
+        dispatch({
+          type: 'UPD',
+          id: expenseId,
+          req: updateExpenseReq,
+        });
+      }
+      navigation.goBack();
+    } catch (error) {
+      setError('Failed to save the expense!');
     }
-    navigation.goBack();
+    setIsSubmitting(false);
   };
-  const delExpenseHandler = () => {
+  const delExpenseHandler = async () => {
     if (expenseId == null) {
       return;
     }
-    dispatch({ type: 'DEL', id: expenseId });
-    navigation.goBack();
+
+    setIsSubmitting(true);
+    try {
+      await deleteExpense(expenseId);
+      dispatch({ type: 'DEL', id: expenseId });
+      navigation.goBack();
+    } catch (error) {
+      setError('Failed to delete the expense!');
+    }
+    setIsSubmitting(false);
   };
+
+  if (isSubmitting) {
+    return <LoadingOverlay />;
+  }
+  if (error != '' && !isSubmitting) {
+    return <ErrorOverlay message={error} onConfirm={() => setError('')} />;
+  }
 
   return (
     <View style={styles.container}>
